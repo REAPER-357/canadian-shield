@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; script-src 'unsafe-inline'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<title>Canadian Shield - Local Encryption</title>
+<style>
+:root{--bg:#121212;--card:#1e1e1e;--bd:#333;--tx:#e0e0e0;--tx2:#9e9e9e;--ac:#ff0000;--ac2:#ff3333;--bad:#e53935;--ok:#43a047;--warn:#fb8c00}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--tx);max-width:650px;margin:40px auto;padding:0 20px;line-height:1.5}
+.container{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:24px;box-shadow:0 4px 12px rgba(0,0,0,.5)}
+.header-box{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:24px;border-bottom:1px solid var(--bd);padding-bottom:16px}
+.brand-top{display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:12px}
+.emblem{width:120px;height:120px;border-radius:50%;object-fit:cover;border:2px solid var(--ac);box-shadow:0 0 12px rgba(255,0,0,.4);margin:10px 0}
+.subtitle{font-size:15px;color:var(--tx);font-weight:600;letter-spacing:.5px;margin-top:4px}
+.badge{font-size:11px;background:#3c1010;color:#ff8a80;border:1px solid #5a1e1e;padding:4px 8px;border-radius:4px;letter-spacing:.5px;white-space:nowrap}
+.tabs{display:flex;gap:10px;margin-bottom:20px;border-bottom:1px solid var(--bd);padding-bottom:10px}
+.tab-btn{background:none;border:none;color:var(--tx2);font-size:16px;font-weight:bold;cursor:pointer;padding:6px 12px;border-radius:4px}
+.tab-btn.active{background:var(--ac);color:#fff}
+.section{display:none}.section.active{display:block}
+label{display:block;margin-bottom:6px;font-size:14px;color:var(--tx2)}
+.password-group{display:flex;gap:8px;margin-bottom:6px}
+.password-group input{margin-bottom:0!important}
+input[type=password],input[type=text],textarea,input[type=file]{width:100%;background:#121212;color:var(--tx);border:1px solid var(--bd);border-radius:4px;padding:10px;box-sizing:border-box;font-family:monospace;margin-bottom:16px}
+textarea{resize:vertical;min-height:100px}
+input[type=file]{padding:8px;cursor:pointer}
+.hint{font-size:12px;color:var(--tx2);min-height:18px;margin-bottom:14px}
+.hint.weak{color:var(--bad)}.hint.fair{color:var(--warn)}.hint.strong{color:var(--ok)}
+.generator-box{background:#171717;border:1px dashed var(--bd);padding:12px;border-radius:6px;margin-bottom:20px}
+.generator-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.generator-row input[type=text]{margin-bottom:0;font-size:13px;background:#0d0d0d}
+button{background:var(--ac);color:#fff;border:none;border-radius:4px;padding:10px 16px;font-size:14px;font-weight:bold;cursor:pointer;transition:background .2s}
+button:hover{background:var(--ac2)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--ac2);outline-offset:2px}
+button:disabled{opacity:.5;cursor:wait}
+.gen-btn,.toggle-btn{white-space:nowrap}
+.toggle-btn{background:#2a2a2a;color:var(--tx2);font-size:13px;padding:0 14px}
+.toggle-btn:hover{background:#3a3a3a;color:var(--tx)}
+.clear-btn{background:#333;color:var(--tx);width:100%;margin-bottom:20px;font-size:13px}
+.clear-btn:hover{background:#444;color:#fff}
+.alt{background:#37474f}.alt:hover{background:#455a64}
+.gen-options{display:flex;gap:15px;font-size:13px;color:var(--tx2);align-items:center;flex-wrap:wrap}
+.gen-options label{display:inline-flex;align-items:center;gap:5px;margin-bottom:0;cursor:pointer}
+#opt-length{width:50px;background:#0d0d0d;color:#fff;border:1px solid #333;border-radius:3px;padding:2px 4px;text-align:center;margin:0}
+.row{display:flex;gap:10px}.row button{flex:1;width:100%;padding:12px 20px;font-size:15px}
+.status{margin-top:10px;font-size:13px;text-align:center}
+.status.success{color:var(--ok)}.status.error{color:var(--bad)}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header-box">
+    <div class="brand-top">
+      <div></div>
+      <span class="badge">Client-side, Local-only</span>
+    </div>
+    <img src="./icon.png" alt="Canadian Shield Emblem" class="emblem">
+    <div class="subtitle">Client Side Offline Encryption App</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-act="tab" data-tab="text">Text Encryption</button>
+    <button class="tab-btn" data-act="tab" data-tab="file">File Encryption</button>
+  </div>
+
+  <button class="clear-btn" data-act="clear">Clear All Fields &amp; Reset App</button>
+
+  <div class="generator-box">
+    <label for="gen-output">Secure Passphrase Generator</label>
+    <div class="generator-row">
+      <input type="text" id="gen-output" readonly autocomplete="off" placeholder="Click generate for a strong key...">
+      <button class="gen-btn" data-act="gen">Generate &amp; Copy</button>
+    </div>
+    <div class="gen-options">
+      <label><input type="checkbox" id="opt-symbols" checked> Symbols (!@#)</label>
+      <label><input type="checkbox" id="opt-numbers" checked> Numbers (0-9)</label>
+      <label>Length: <input type="number" id="opt-length" value="25" min="16" max="64"></label>
+    </div>
+  </div>
+
+  <div id="text-section" class="section active">
+    <label for="text-password">Encryption Password</label>
+    <div class="password-group">
+      <input type="password" id="text-password" autocomplete="new-password" placeholder="Enter or paste passphrase...">
+      <button type="button" class="toggle-btn" data-act="toggle" data-target="text-password">Show</button>
+    </div>
+    <div class="hint" id="text-strength"></div>
+
+    <label for="text-input">Input Text or Encrypted Payload</label>
+    <textarea id="text-input" spellcheck="false" placeholder="Type secret text or paste base64 ciphertext here..."></textarea>
+    <div class="hint">Encrypting replaces the text above with ciphertext. Without the password it cannot be recovered.</div>
+
+    <div class="row">
+      <button data-act="enc-text">Encrypt Text</button>
+      <button class="alt" data-act="dec-text">Decrypt Text</button>
+    </div>
+    <div id="text-status" class="status"></div>
+  </div>
+
+  <div id="file-section" class="section">
+    <label for="file-password">Encryption Password</label>
+    <div class="password-group">
+      <input type="password" id="file-password" autocomplete="new-password" placeholder="Enter or paste passphrase...">
+      <button type="button" class="toggle-btn" data-act="toggle" data-target="file-password">Show</button>
+    </div>
+    <div class="hint" id="file-strength"></div>
+
+    <label for="file-input">Select File (any format, up to 500 MB)</label>
+    <input type="file" id="file-input">
+
+    <div class="row">
+      <button data-act="enc-file">Encrypt &amp; Download</button>
+      <button class="alt" data-act="dec-file">Decrypt &amp; Download</button>
+    </div>
+    <div id="file-status" class="status"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var ENC = new TextEncoder();
+
+  // Format v2: "REAP"(4) | version(1) | iterations u32(4) | salt(16) | iv(12) | AES-GCM ciphertext+tag
+  var MAGIC = [0x52, 0x45, 0x41, 0x50], VERSION = 2;
+  var ITER = 600000, LEGACY_ITER = 150000, MIN_ITER = 100000, MAX_ITER = 5000000;
+  var AAD_LEN = 25, HDR = 37, MAX_FILE = 500 * 1024 * 1024;
+
+  function rand(n) { return crypto.getRandomValues(new Uint8Array(n)); }
+
+  async function deriveKey(pw, salt, iter, legacy) {
+    var raw = ENC.encode(legacy ? pw : pw.normalize('NFC'));
+    var km = await crypto.subtle.importKey('raw', raw, 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: iter, hash: 'SHA-256' },
+      km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  }
+
+  async function seal(name, bytes, pw) {
+    var nb = ENC.encode(name || '').slice(0, 1000);
+    var payload = new Uint8Array(2 + nb.length + bytes.length);
+    new DataView(payload.buffer).setUint16(0, nb.length);
+    payload.set(nb, 2);
+    payload.set(bytes, 2 + nb.length);
+
+    var h = new Uint8Array(HDR), salt = rand(16), iv = rand(12);
+    h.set(MAGIC, 0); h[4] = VERSION;
+    new DataView(h.buffer).setUint32(5, ITER);
+    h.set(salt, 9); h.set(iv, 25);
+
+    var key = await deriveKey(pw, salt, ITER, false);
+    var ct = new Uint8Array(await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv: iv, additionalData: h.slice(0, AAD_LEN) }, key, payload));
+    var out = new Uint8Array(HDR + ct.length);
+    out.set(h, 0); out.set(ct, HDR);
+    return out;
+  }
+
+  async function open(buf, pw) {
+    var isV2 = buf.length > HDR + 16 && MAGIC.every(function (b, i) { return buf[i] === b; }) && buf[4] === VERSION;
+    if (isV2) {
+      var iter = new DataView(buf.buffer, buf.byteOffset).getUint32(5);
+      if (iter >= MIN_ITER && iter <= MAX_ITER) {
+        try {
+          var key = await deriveKey(pw, buf.slice(9, 25), iter, false);
+          var p = new Uint8Array(await crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv: buf.slice(25, 37), additionalData: buf.slice(0, AAD_LEN) }, key, buf.slice(HDR)));
+          var n = new DataView(p.buffer).getUint16(0);
+          return { name: new TextDecoder().decode(p.subarray(2, 2 + n)), data: p.subarray(2 + n), legacy: false };
+        } catch (e) { /* fall through */ }
+      }
+    }
+    if (buf.length < 28 + 16) throw new Error('Too short');
+    var k1 = await deriveKey(pw, buf.slice(0, 16), LEGACY_ITER, true);
+    var d = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: buf.slice(16, 28) }, k1, buf.slice(28)));
+    return { name: '', data: d, legacy: true };
+  }
+
+  function b64(bytes) {
+    var s = '';
+    for (var i = 0; i < bytes.length; i += 8192) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+    return btoa(s);
+  }
+  function unb64(t) { return Uint8Array.from(atob(t.replace(/\s+/g, '')), function (c) { return c.charCodeAt(0); }); }
+
+  function save(bytes, name) {
+    var url = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
+    var a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+  }
+  function safeName(n) { return (n || '').replace(/[\\\/:*?"<>|\u0000-\u001f]/g, '_').slice(0, 200); }
+
+  function status(id, msg, cls) { var s = $(id); s.className = 'status ' + (cls || ''); s.textContent = msg; }
+  function tick() { return new Promise(function (r) { setTimeout(r, 30); }); }
+
+  function bits(pw) {
+    var pool = 0;
+    if (/[a-z]/.test(pw)) pool += 26;
+    if (/[A-Z]/.test(pw)) pool += 26;
+    if (/[0-9]/.test(pw)) pool += 10;
+    if (/[^a-zA-Z0-9]/.test(pw)) pool += 33;
+    return pool ? Math.round(pw.length * Math.log2(pool)) : 0;
+  }
+  function showStrength(inputId, hintId) {
+    var pw = $(inputId).value, h = $(hintId);
+    if (!pw) { h.textContent = ''; h.className = 'hint'; return; }
+    var b = bits(pw), c = b < 60 ? 'weak' : b < 80 ? 'fair' : 'strong';
+    var label = { weak: 'Weak', fair: 'Fair', strong: 'Strong' }[c];
+    h.className = 'hint ' + c;
+    h.textContent = label + ': about ' + b + ' bits if random. ' +
+      (c === 'strong' ? '' : 'Use the generator for a stronger passphrase.');
+  }
+  function weakOk(pw) {
+    return bits(pw) >= 60 || confirm('This password looks weak and the file could be brute-forced. Encrypt anyway?');
+  }
+
+  async function encryptText() {
+    var pw = $('text-password').value, plain = $('text-input').value;
+    if (!pw || !plain) return status('text-status', 'Provide both password and text.', 'error');
+    if (!weakOk(pw)) return;
+    try {
+      status('text-status', 'Encrypting...'); await tick();
+      var out = await seal('', ENC.encode(plain), pw);
+      $('text-input').value = b64(out);
+      status('text-status', 'Encryption successful. Ciphertext generated.', 'success');
+    } catch (e) { status('text-status', 'Encryption failed: ' + e.message, 'error'); }
+  }
+
+  async function decryptText() {
+    var pw = $('text-password').value, c = $('text-input').value;
+    if (!pw || !c) return status('text-status', 'Provide password and ciphertext.', 'error');
+    try {
+      status('text-status', 'Decrypting...'); await tick();
+      var r = await open(unb64(c), pw);
+      $('text-input').value = new TextDecoder('utf-8', { fatal: true }).decode(r.data);
+      status('text-status', 'Decryption successful.', 'success');
+    } catch (e) { status('text-status', 'Decryption failed: incorrect password, corrupted data, or not text.', 'error'); }
+  }
+
+  async function encryptFile() {
+    var pw = $('file-password').value, f = $('file-input').files[0];
+    if (!pw || !f) return status('file-status', 'Provide a password and select a file.', 'error');
+    if (f.size > MAX_FILE) return status('file-status', 'File is over 500 MB. Too large to encrypt in the browser.', 'error');
+    if (!weakOk(pw)) return;
+    try {
+      status('file-status', 'Encrypting file...'); await tick();
+      var out = await seal(f.name, new Uint8Array(await f.arrayBuffer()), pw);
+      save(out, f.name + '.enc');
+      status('file-status', 'File encrypted and downloaded.', 'success');
+    } catch (e) { status('file-status', 'File encryption failed: ' + e.message, 'error'); }
+  }
+
+  async function decryptFile() {
+    var pw = $('file-password').value, f = $('file-input').files[0];
+    if (!pw || !f) return status('file-status', 'Provide a password and select an .enc file.', 'error');
+    if (f.size > MAX_FILE + 1024) return status('file-status', 'File is too large to decrypt in the browser.', 'error');
+    try {
+      status('file-status', 'Decrypting file...'); await tick();
+      var r = await open(new Uint8Array(await f.arrayBuffer()), pw);
+      var name = safeName(r.name);
+      if (!name) {
+        name = f.name.replace(/\.enc$/i, '') || 'decrypted';
+        var isPdf = r.data[0] === 0x25 && r.data[1] === 0x50 && r.data[2] === 0x44 && r.data[3] === 0x46;
+        if (isPdf && !/\.pdf$/i.test(name)) name += '.pdf';
+      }
+      save(r.data, name);
+      status('file-status', 'File decrypted and downloaded as ' + name + (r.legacy ? ' (older format).' : '.'), 'success');
+    } catch (e) { status('file-status', 'Decryption failed: incorrect password or corrupted file.', 'error'); }
+  }
+
+  function rnd(n) {
+    var lim = Math.floor(4294967296 / n) * n, a = new Uint32Array(1);
+    do { crypto.getRandomValues(a); } while (a[0] >= lim);
+    return a[0] % n;
+  }
+
+  function generate() {
+    var len = Math.min(64, Math.max(16, parseInt($('opt-length').value, 10) || 25));
+    $('opt-length').value = len;
+    var chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    if ($('opt-numbers').checked) chars += '0123456789';
+    if ($('opt-symbols').checked) chars += '!@#$%^&*()_+-=[]{}|;:,.<>?';
+    var pw = '';
+    for (var i = 0; i < len; i++) pw += chars[rnd(chars.length)];
+    $('gen-output').value = pw;
+    $('text-password').value = pw; $('file-password').value = pw;
+    showStrength('text-password', 'text-strength'); showStrength('file-password', 'file-strength');
+    copy(pw);
+  }
+
+  function copied() {
+    var b = document.querySelector('.gen-btn'), t = 'Generate & Copy';
+    b.textContent = 'Copied!'; b.style.background = 'var(--ok)';
+    setTimeout(function () { b.textContent = t; b.style.background = ''; }, 2000);
+  }
+  function legacyCopy(t) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = t; ta.style.position = 'fixed';
+      document.body.appendChild(ta); ta.select();
+      var ok = document.execCommand('copy'); ta.remove();
+      if (ok) copied();
+    } catch (e) { /* copy unavailable */ }
+  }
+  function copy(t) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(copied, function () { legacyCopy(t); });
+    } else { legacyCopy(t); }
+  }
+
+  function clearApp() {
+    ['gen-output', 'text-password', 'file-password', 'text-input', 'file-input'].forEach(function (id) { $(id).value = ''; });
+    ['text-password', 'file-password'].forEach(function (id) { $(id).type = 'password'; });
+    document.querySelectorAll('.toggle-btn').forEach(function (b) { b.textContent = 'Show'; });
+    status('text-status', ''); status('file-status', '');
+    showStrength('text-password', 'text-strength'); showStrength('file-password', 'file-strength');
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.section').forEach(function (s) { s.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === tab); });
+    $(tab + '-section').classList.add('active');
+  }
+
+  var actions = {
+    tab: function (el) { switchTab(el.dataset.tab); },
+    toggle: function (el) {
+      var i = $(el.dataset.target), show = i.type === 'password';
+      i.type = show ? 'text' : 'password'; el.textContent = show ? 'Hide' : 'Show';
+    },
+    clear: clearApp, gen: generate,
+    'enc-text': encryptText, 'dec-text': decryptText,
+    'enc-file': encryptFile, 'dec-file': decryptFile
+  };
+
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-act]');
+    if (el && actions[el.dataset.act]) actions[el.dataset.act](el);
+  });
+  $('text-password').addEventListener('input', function () { showStrength('text-password', 'text-strength'); });
+  $('file-password').addEventListener('input', function () { showStrength('file-password', 'file-strength'); });
+})();
+</script>
+</body>
+</html>
